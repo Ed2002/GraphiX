@@ -1,5 +1,5 @@
 import { useGraph, useAlgorithm } from './hooks';
-import { Sidebar, AlgorithmPanel, GraphCanvas, ResultsConsole } from './features';
+import { Sidebar, AlgorithmPanel, GraphCanvas, ResultsConsole, AdjacencyMatrix } from './features';
 import './index.css';
 
 function App() {
@@ -132,6 +132,14 @@ function App() {
               }
             />
           </div>
+        </div>
+
+        {/* Adjacency Matrix */}
+        <div className="px-5 py-4 pt-1 mb-8">
+          <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+            Adjacency Matrix
+          </h2>
+          <AdjacencyMatrix graph={graph} />
         </div>
       </div>
     </div>
