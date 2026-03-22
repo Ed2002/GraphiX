@@ -73,6 +73,9 @@ const SVG_HEIGHT = 600;
 export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
   const [manualPositions, setManualPositions] = useState<Record<string, NodePosition>>({});
   const [dragInfo, setDragInfo] = useState<{ id: string, offsetX: number, offsetY: number } | null>(null);
+  const [canvasDragInfo, setCanvasDragInfo] = useState<{ startX: number; startY: number; startPanX: number; startPanY: number } | null>(null);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const defaultPositions = useMemo(
@@ -88,15 +91,26 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
     return map;
   }, [defaultPositions, manualPositions]);
 
+  const handleCanvasPointerDown = (e: React.PointerEvent) => {
+    setCanvasDragInfo({
+      startX: e.clientX,
+      startY: e.clientY,
+      startPanX: pan.x,
+      startPanY: pan.y,
+    });
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
   const handlePointerDown = (e: React.PointerEvent, vertexId: string, pos: NodePosition) => {
     e.stopPropagation();
     const svg = svgRef.current;
-    if (!svg) return;
+    const g = svg?.querySelector('#graph-group') as SVGGElement | null;
+    if (!svg || !g) return;
     
     const pt = svg.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
-    const cursor = pt.matrixTransform(svg.getScreenCTM()?.inverse());
+    const cursor = pt.matrixTransform(g.getScreenCTM()?.inverse());
     
     setDragInfo({
       id: vertexId,
@@ -107,14 +121,25 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    if (canvasDragInfo) {
+      const dx = e.clientX - canvasDragInfo.startX;
+      const dy = e.clientY - canvasDragInfo.startY;
+      setPan({
+        x: canvasDragInfo.startPanX + dx,
+        y: canvasDragInfo.startPanY + dy,
+      });
+      return;
+    }
+
     if (!dragInfo) return;
     const svg = svgRef.current;
-    if (!svg) return;
+    const g = svg?.querySelector('#graph-group') as SVGGElement | null;
+    if (!svg || !g) return;
     
     const pt = svg.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
-    const cursor = pt.matrixTransform(svg.getScreenCTM()?.inverse());
+    const cursor = pt.matrixTransform(g.getScreenCTM()?.inverse());
     
     setManualPositions((prev) => ({
       ...prev,
@@ -126,10 +151,44 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    if (canvasDragInfo) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      setCanvasDragInfo(null);
+    }
     if (dragInfo) {
       e.currentTarget.releasePointerCapture(e.pointerId);
       setDragInfo(null);
     }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const zoomDirection = e.deltaY > 0 ? -1 : 1;
+    const zoomFactor = 0.1;
+    const newZoom = Math.max(0.1, Math.min(zoom + (zoomDirection * zoomFactor * zoom), 4));
+    
+    if (newZoom !== zoom) {
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const cursor = pt.matrixTransform(svg.getScreenCTM()?.inverse());
+      
+      const gX = (cursor.x - pan.x) / zoom;
+      const gY = (cursor.y - pan.y) / zoom;
+      
+      const newPanX = cursor.x - gX * newZoom;
+      const newPanY = cursor.y - gY * newZoom;
+      
+      setZoom(newZoom);
+      setPan({ x: newPanX, y: newPanY });
+    }
+  };
+
+  const resetView = () => {
+    setPan({ x: 0, y: 0 });
+    setZoom(1);
   };
 
   const markerId = 'arrowhead';
@@ -166,12 +225,29 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
         </div>
       )}
 
+      {/* View controls */}
+      <div className="absolute top-4 right-4 z-20 flex gap-2">
+        <button
+          onClick={resetView}
+          className="px-2.5 py-1.5 bg-bg-secondary/90 backdrop-blur-sm border border-border-default rounded-md text-[10px] text-text-muted hover:text-text-primary hover:border-text-muted transition-colors shadow-sm cursor-pointer"
+        >
+          Reset View
+        </button>
+      </div>
+
       {/* SVG Canvas */}
       <svg
         ref={svgRef}
         viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
         className="w-full h-full relative z-0 touch-none"
         xmlns="http://www.w3.org/2000/svg"
+        onPointerDown={handleCanvasPointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onWheel={handleWheel}
+        style={{ cursor: canvasDragInfo ? 'grabbing' : 'grab' }}
       >
         <defs>
           {/* Arrow marker for directed edges */}
@@ -207,6 +283,8 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
             </feMerge>
           </filter>
         </defs>
+
+        <g id="graph-group" transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
 
         {/* Edges */}
         {graph.edges.map((edge) => {
@@ -318,6 +396,8 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
             </g>
           );
         })}
+
+        </g>
       </svg>
 
       {/* Graph info bar */}
