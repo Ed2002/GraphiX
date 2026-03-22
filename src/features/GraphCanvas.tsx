@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef } from 'react';
 import type { GraphState, AnimationState } from '../types';
+import { MiniMap } from './MiniMap';
 
 interface GraphCanvasProps {
   graph: GraphState;
@@ -405,6 +406,8 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
         <span>{graph.vertices.length} vertices · {graph.edges.length} edges</span>
         <span>{graph.directed ? 'Directed' : 'Undirected'} Graph</span>
       </div>
+
+      <MiniMap graph={graph} positions={positions} pan={pan} zoom={zoom} />
     </div>
   );
 }

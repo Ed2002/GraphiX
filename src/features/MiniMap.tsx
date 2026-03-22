@@ -1,41 +1,46 @@
-import { useMemo } from 'react';
 import type { GraphState } from '../types';
 
 interface MiniMapProps {
   graph: GraphState;
+  positions: Map<string, { x: number; y: number }>;
+  pan: { x: number; y: number };
+  zoom: number;
 }
 
 const MINI_W = 160;
 const MINI_H = 120;
-const NODE_R = 4;
 
-export function MiniMap({ graph }: MiniMapProps) {
-  const positions = useMemo(() => {
-    const map = new Map<string, { x: number; y: number }>();
-    const count = graph.vertices.length;
-    if (count === 0) return map;
-
-    const cx = MINI_W / 2;
-    const cy = MINI_H / 2;
-    const radius = Math.min(cx, cy) * 0.65;
-
-    if (count === 1) {
-      map.set(graph.vertices[0].id, { x: cx, y: cy });
-      return map;
-    }
-
-    graph.vertices.forEach((v, i) => {
-      const angle = (2 * Math.PI * i) / count - Math.PI / 2;
-      map.set(v.id, {
-        x: cx + radius * Math.cos(angle),
-        y: cy + radius * Math.sin(angle),
-      });
-    });
-
-    return map;
-  }, [graph.vertices]);
-
+export function MiniMap({ graph, positions, pan, zoom }: MiniMapProps) {
   if (graph.vertices.length === 0) return null;
+
+  const canvasWidth = 800;
+  const canvasHeight = 600;
+
+  let minX = 0;
+  let minY = 0;
+  let maxX = canvasWidth;
+  let maxY = canvasHeight;
+
+  positions.forEach((pos) => {
+    if (pos.x < minX) minX = pos.x;
+    if (pos.y < minY) minY = pos.y;
+    if (pos.x > maxX) maxX = pos.x;
+    if (pos.y > maxY) maxY = pos.y;
+  });
+
+  const padding = 50;
+  minX -= padding;
+  minY -= padding;
+  maxX += padding;
+  maxY += padding;
+
+  const w = maxX - minX;
+  const h = maxY - minY;
+
+  const vpX = -pan.x / zoom;
+  const vpY = -pan.y / zoom;
+  const vpW = canvasWidth / zoom;
+  const vpH = canvasHeight / zoom;
 
   return (
     <div className="absolute bottom-12 right-4 z-20">
@@ -46,11 +51,9 @@ export function MiniMap({ graph }: MiniMapProps) {
         <svg
           width={MINI_W}
           height={MINI_H}
-          viewBox={`0 0 ${MINI_W} ${MINI_H}`}
-          className="rounded"
+          viewBox={`${minX} ${minY} ${w} ${h}`}
+          className="rounded bg-bg-primary overflow-hidden"
         >
-          <rect width={MINI_W} height={MINI_H} fill="var(--color-bg-primary)" rx="4" />
-
           {/* Edges */}
           {graph.edges.map((edge) => {
             const from = positions.get(edge.from);
@@ -65,7 +68,7 @@ export function MiniMap({ graph }: MiniMapProps) {
                 x2={to.x}
                 y2={to.y}
                 stroke="var(--color-edge-default)"
-                strokeWidth="0.8"
+                strokeWidth={w * 0.005}
                 opacity="0.5"
               />
             );
@@ -81,12 +84,24 @@ export function MiniMap({ graph }: MiniMapProps) {
                 key={`mini-${v.id}`}
                 cx={pos.x}
                 cy={pos.y}
-                r={NODE_R}
+                r={w * 0.015}
                 fill="var(--color-node-default)"
                 opacity="0.8"
               />
             );
           })}
+
+          {/* Viewport Box */}
+          <rect
+            x={vpX}
+            y={vpY}
+            width={vpW}
+            height={vpH}
+            fill="none"
+            stroke="var(--color-accent)"
+            strokeWidth={w * 0.005}
+            opacity="0.8"
+          />
         </svg>
       </div>
     </div>
