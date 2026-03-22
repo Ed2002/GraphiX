@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import type { GraphState, AnimationState } from '../types';
 
 interface GraphCanvasProps {
@@ -71,10 +71,66 @@ const SVG_WIDTH = 800;
 const SVG_HEIGHT = 600;
 
 export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
-  const positions = useMemo(
+  const [manualPositions, setManualPositions] = useState<Record<string, NodePosition>>({});
+  const [dragInfo, setDragInfo] = useState<{ id: string, offsetX: number, offsetY: number } | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  const defaultPositions = useMemo(
     () => computePositions(graph.vertices, SVG_WIDTH, SVG_HEIGHT),
     [graph.vertices]
   );
+
+  const positions = useMemo(() => {
+    const map = new Map<string, NodePosition>();
+    for (const [id, pos] of defaultPositions.entries()) {
+      map.set(id, manualPositions[id] || pos);
+    }
+    return map;
+  }, [defaultPositions, manualPositions]);
+
+  const handlePointerDown = (e: React.PointerEvent, vertexId: string, pos: NodePosition) => {
+    e.stopPropagation();
+    const svg = svgRef.current;
+    if (!svg) return;
+    
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const cursor = pt.matrixTransform(svg.getScreenCTM()?.inverse());
+    
+    setDragInfo({
+      id: vertexId,
+      offsetX: cursor.x - pos.x,
+      offsetY: cursor.y - pos.y
+    });
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragInfo) return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const cursor = pt.matrixTransform(svg.getScreenCTM()?.inverse());
+    
+    setManualPositions((prev) => ({
+      ...prev,
+      [dragInfo.id]: {
+        x: cursor.x - dragInfo.offsetX,
+        y: cursor.y - dragInfo.offsetY
+      }
+    }));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (dragInfo) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      setDragInfo(null);
+    }
+  };
 
   const markerId = 'arrowhead';
   const markerHighlightId = 'arrowhead-highlight';
@@ -112,8 +168,9 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
 
       {/* SVG Canvas */}
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-        className="w-full h-full relative z-10"
+        className="w-full h-full relative z-0 touch-none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
@@ -201,8 +258,17 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
           const isVisiting =
             animation.traversalOrder[animation.currentStep] === vertex.id;
 
+          const isDragging = dragInfo?.id === vertex.id;
+
           return (
-            <g key={vertex.id}>
+            <g 
+              key={vertex.id}
+              onPointerDown={(e) => handlePointerDown(e, vertex.id, pos)}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+            >
               {/* Outer glow ring */}
               {isVisiting && (
                 <circle

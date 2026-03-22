@@ -78,12 +78,14 @@ function App() {
         </div>
 
         {/* Canvas + Results */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 relative min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 relative">
+          <div className="flex-1 relative min-h-0 z-0">
             <GraphCanvas graph={graph} animation={animation} />
             <MiniMap graph={graph} />
           </div>
-          <ResultsConsole logs={logs} onClear={clearLogs} />
+          <div className="relative z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] bg-bg-secondary">
+            <ResultsConsole logs={logs} onClear={clearLogs} />
+          </div>
         </div>
       </div>
 
