@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 const CHANGELOG = [
   {
     version: 'v1.1.0',
-    date: 'Today',
+    date: 'March 22, 2026',
     changes: [
       'Added interactive canvas panning and scrolling zoom',
       'Nodes are now fully draggable with preserved positions',
@@ -13,7 +13,7 @@ const CHANGELOG = [
   },
   {
     version: 'v1.0.0',
-    date: 'Initial Release',
+    date: 'March 22, 2026',
     changes: [
       'Dark-mode dashboard layout with Sidebar and integrated output Console',
       'SVG Graph rendering with directed/undirected configurations',
@@ -49,7 +49,7 @@ export function LandingPage() {
           <div className="pt-6">
             <Link to="/app" className="inline-block relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-accent to-info rounded-lg blur opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-              <button className="relative px-8 py-3.5 bg-bg-elevated hover:bg-bg-secondary ring-1 ring-border-default text-white rounded-lg font-medium transition-all flex items-center gap-2">
+              <button className="cursor-pointer relative px-8 py-3.5 bg-bg-elevated hover:bg-bg-secondary ring-1 ring-border-default text-white rounded-lg font-medium transition-all flex items-center gap-2">
                 Open Graph Editor
                 <svg className="w-4 h-4 text-text-muted group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -61,20 +61,20 @@ export function LandingPage() {
 
         {/* Features */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t border-border-default/50">
-          <FeatureCard 
+          <FeatureCard
             icon={<svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>}
-            title="Interactive Canvas" 
-            desc="Node dragging, seamless zoom and map panning backed by an automatic scaled minimap." 
+            title="Interactive Canvas"
+            desc="Node dragging, seamless zoom and map panning backed by an automatic scaled minimap."
           />
-          <FeatureCard 
+          <FeatureCard
             icon={<svg className="w-5 h-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
-            title="Algorithm Visualization" 
-            desc="Traverse through BFS, DFS, and strongly connected components with controlled speed steps." 
+            title="Algorithm Visualization"
+            desc="Traverse through BFS, DFS, and strongly connected components with controlled speed steps."
           />
-          <FeatureCard 
+          <FeatureCard
             icon={<svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
-            title="Real-time Metrics" 
-            desc="Automatic live adjacency matrices, calculated graph density, and visual history logs." 
+            title="Real-time Metrics"
+            desc="Automatic live adjacency matrices, calculated graph density, and visual history logs."
           />
         </section>
 
@@ -107,6 +107,13 @@ export function LandingPage() {
             ))}
           </div>
         </section>
+
+        {/* Footer */}
+        <footer className="pt-4 pb-8 border-t border-border-default/30 flex justify-center items-center opacity-80 hover:opacity-100 transition-opacity">
+          <p className="text-sm text-text-muted">
+            Developed by <a href="https://www.eduardoduarte.com.br/ " target='_blank'><span className="font-bold"><span className='text-[#002A99]'>Eduardo</span><span className="text-[#013CFF]">Duarte</span></span></a>
+          </p>
+        </footer>
       </div>
     </div>
   );
