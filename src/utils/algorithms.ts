@@ -191,3 +191,108 @@ export function isConnectedUndirected(
   // For undirected, the adj is already symmetric
   return isConnected(adj, vertexCount);
 }
+
+
+
+
+function ordenarVerticesPorGrauAdjacencia(adj: Map<string, string[]>) {
+  return Array.from(adj.entries())
+    .map(([verticeId, adjacentes]) => ({
+      id: verticeId,
+      grau: adjacentes.length,
+      adjacentes,
+    }))
+    .sort((a, b) => {
+      // Ordena por grau decrescente
+      if (b.grau !== a.grau) {
+        return b.grau - a.grau;
+      }
+
+      // Critério de desempate opcional:
+      // mantém ordem alfabética/natural pelo id
+      return a.id.localeCompare(b.id, undefined, { numeric: true });
+    });
+}
+
+function menorCorAdmissivel(
+  vertice: string,
+  adj: Map<string, string[]>,
+  cores: Map<string, number>
+) {
+  const adjacentes = adj.get(vertice) || [];
+  const coresIndisponiveis = new Set<number>();
+
+  for (const vizinho of adjacentes) {
+    const corVizinho = cores.get(vizinho);
+
+    if (corVizinho !== undefined) {
+      coresIndisponiveis.add(corVizinho);
+    }
+  }
+
+  let cor = 1;
+
+  while (coresIndisponiveis.has(cor)) {
+    cor++;
+  }
+
+  return cor;
+}
+
+export function coloring(adj: Map<string, string[]>) {
+  const verticesOrdenados = ordenarVerticesPorGrauAdjacencia(adj);
+
+  const cores = new Map<string, number>();
+  const verticesNaoColoridos = new Set<string>(adj.keys());
+
+  // 1. Inicialização: colore o primeiro vértice com maior grau
+  const primeiroVertice = verticesOrdenados[0].id;
+
+  cores.set(primeiroVertice, 1);
+  verticesNaoColoridos.delete(primeiroVertice);
+
+  // 2. Continua até colorir todos os vértices
+  while (verticesNaoColoridos.size > 0) {
+    let melhorVertice: string | null = null;
+    let maiorSaturacao = -1;
+    let maiorGrau = -1;
+
+    for (const vertice of verticesNaoColoridos) {
+      const adjacentes = adj.get(vertice) || [];
+
+      // Cores diferentes já usadas pelos vizinhos
+      const coresVizinhas = new Set<number>();
+
+      for (const vizinho of adjacentes) {
+        const corVizinho = cores.get(vizinho);
+
+        if (corVizinho !== undefined) {
+          coresVizinhas.add(corVizinho);
+        }
+      }
+
+      const grauSaturacao = coresVizinhas.size;
+      const grauVertice = adjacentes.length;
+
+      // Escolhe quem tem maior saturação.
+      // Em caso de empate, escolhe quem tem maior grau.
+      if (
+        grauSaturacao > maiorSaturacao ||
+        (grauSaturacao === maiorSaturacao && grauVertice > maiorGrau)
+      ) {
+        melhorVertice = vertice;
+        maiorSaturacao = grauSaturacao;
+        maiorGrau = grauVertice;
+      }
+    }
+
+    if (!melhorVertice) break;
+
+    const cor = menorCorAdmissivel(melhorVertice, adj, cores);
+
+    cores.set(melhorVertice, cor);
+    verticesNaoColoridos.delete(melhorVertice);
+  }
+
+  return cores;
+}

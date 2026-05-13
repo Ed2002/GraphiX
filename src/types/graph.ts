@@ -24,7 +24,9 @@ export type AlgorithmType =
   | 'transitive-closure-direct'
   | 'transitive-closure-inverse'
   | 'connectivity'
-  | 'kosaraju-scc';
+  | 'kosaraju-scc'
+  | 'coloring'
+  ;
 
 export interface AlgorithmResult {
   algorithm: AlgorithmType;
@@ -47,6 +49,9 @@ export interface AnimationState {
   speed: number; // ms per step
   traversalOrder: string[];
   visitedSet: Set<string>;
+
+  coloringMap?: Map<string, number>;
+  coloringOrder?: string[];
 }
 
 // ─── Console Log Entry ──────────────────────────────────

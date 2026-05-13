@@ -2,6 +2,7 @@ import { useGraph, useAlgorithm } from '../hooks';
 import { Sidebar, AlgorithmPanel, GraphCanvas, ResultsConsole, AdjacencyMatrix } from '../features';
 import '../index.css';
 import { Link } from 'react-router-dom';
+import { COLOR_PALETTE } from '../utils/graph';
 
 export function GraphEditor() {
   const {
@@ -28,6 +29,17 @@ export function GraphEditor() {
     execute,
   } = useAlgorithm(graph);
 
+
+  const isColoringMode = selectedAlgorithm === 'coloring';
+
+  const usedColorNumbers = Array.from(
+    new Set(animation.coloringMap ? Array.from(animation.coloringMap.values()) : [])
+  ).sort((a, b) => a - b);
+
+
+  console.log("isColoringMode", isColoringMode, animation);
+  console.log("usedColorNumbers", usedColorNumbers);
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg-primary">
       {/* Sidebar */}
@@ -48,8 +60,8 @@ export function GraphEditor() {
         {/* Top Bar */}
         <div className="flex items-center justify-between px-5 py-2.5 bg-bg-secondary border-b border-border-default">
           <div className="flex items-center gap-3">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors border border-transparent hover:border-border-default"
               title="Return to Home"
             >
@@ -72,19 +84,45 @@ export function GraphEditor() {
           </div>
 
           {/* Legend */}
+          {/* Legend */}
           <div className="flex items-center gap-3 text-[10px]">
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-node-default)' }} />
-              Default
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-node-visiting)' }} />
-              Visiting
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-node-visited)' }} />
-              Visited
-            </span>
+            {isColoringMode && usedColorNumbers.length > 0 ? (
+              usedColorNumbers.map((colorNumber) => (
+                <span key={colorNumber} className="flex items-center gap-1">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ background: COLOR_PALETTE[colorNumber] }}
+                  />
+                  Cor {colorNumber}
+                </span>
+              ))
+            ) : (
+              <>
+                <span className="flex items-center gap-1">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ background: 'var(--color-node-default)' }}
+                  />
+                  Default
+                </span>
+
+                <span className="flex items-center gap-1">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ background: 'var(--color-node-visiting)' }}
+                  />
+                  Visiting
+                </span>
+
+                <span className="flex items-center gap-1">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ background: 'var(--color-node-visited)' }}
+                  />
+                  Visited
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -133,12 +171,12 @@ export function GraphEditor() {
               value={
                 graph.vertices.length > 1
                   ? `${(
-                      (graph.edges.length /
-                        (graph.vertices.length *
-                          (graph.vertices.length - 1) *
-                          (graph.directed ? 1 : 0.5))) *
-                      100
-                    ).toFixed(1)}%`
+                    (graph.edges.length /
+                      (graph.vertices.length *
+                        (graph.vertices.length - 1) *
+                        (graph.directed ? 1 : 0.5))) *
+                    100
+                  ).toFixed(1)}%`
                   : '—'
               }
             />

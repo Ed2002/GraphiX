@@ -21,6 +21,7 @@ const ALGORITHM_OPTIONS: { value: AlgorithmType; label: string }[] = [
   { value: 'transitive-closure-inverse', label: 'Transitive Closure (Inverse)' },
   { value: 'connectivity', label: 'Connectivity Check' },
   { value: 'kosaraju-scc', label: 'Strongly Connected Components' },
+  { value: 'coloring', label: 'Graph Coloring' },
 ];
 
 const SPEED_MARKS = [
