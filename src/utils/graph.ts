@@ -2,6 +2,18 @@ import type { GraphState, Vertex, Edge } from '../types';
 
 let vertexCounter = 0;
 
+export const COLOR_PALETTE: Record<number, string> = {
+  1: '#ef4444', // vermelho
+  2: '#3b82f6', // azul
+  3: '#22c55e', // verde
+  4: '#eab308', // amarelo
+  5: '#a855f7', // roxo
+  6: '#f97316', // laranja
+  7: '#14b8a6', // teal
+  8: '#ec4899', // rosa
+};
+
+
 /** Create a fresh graph state */
 export function createGraph(directed: boolean): GraphState {
   return { vertices: [], edges: [], directed };

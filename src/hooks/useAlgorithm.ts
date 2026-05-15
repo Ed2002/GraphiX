@@ -11,6 +11,7 @@ import {
   isConnected,
   kosarajuSCC,
 } from '../utils';
+import { coloring } from '../utils/algorithms';
 
 const ALGORITHM_LABELS: Record<AlgorithmType, string> = {
   'bfs': 'BFS (Breadth-First Search)',
@@ -19,7 +20,9 @@ const ALGORITHM_LABELS: Record<AlgorithmType, string> = {
   'transitive-closure-inverse': 'Transitive Closure (Inverse)',
   'connectivity': 'Connectivity Check',
   'kosaraju-scc': 'Strongly Connected Components',
+  'coloring': 'Graph Coloring',
 };
+
 
 let entryIdCounter = 0;
 function createEntry(message: string, level: ConsoleEntry['level']): ConsoleEntry {
@@ -73,6 +76,8 @@ export function useAlgorithm(graph: GraphState) {
       speed: animation.speed,
       traversalOrder: [],
       visitedSet: new Set(),
+      coloringMap: new Map(),
+      coloringOrder: []
     });
   }, [stopAnimation, animation.speed]);
 
@@ -125,10 +130,84 @@ export function useAlgorithm(graph: GraphState) {
     }, speed);
   }, [stopAnimation]);
 
+  const runColoringAnimation = useCallback(
+    (coloringResult: Map<string, number>, speed: number) => {
+      stopAnimation();
+
+      const coloringOrder = Array.from(coloringResult.keys());
+
+      if (coloringOrder.length === 0) return;
+
+      const firstVertex = coloringOrder[0];
+      const firstColor = coloringResult.get(firstVertex);
+
+      const initialColoringMap = new Map<string, number>();
+
+      if (firstColor !== undefined) {
+        initialColoringMap.set(firstVertex, firstColor);
+      }
+
+      setAnimation({
+        isRunning: true,
+        currentStep: 0,
+        totalSteps: coloringOrder.length,
+        speed,
+        traversalOrder: coloringOrder,
+        visitedSet: new Set([firstVertex]),
+        coloringMap: initialColoringMap,
+        coloringOrder,
+      });
+
+      let step = 0;
+
+      intervalRef.current = setInterval(() => {
+        step += 1;
+
+        if (step >= coloringOrder.length) {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+
+          intervalRef.current = null;
+
+          setAnimation((prev) => ({
+            ...prev,
+            isRunning: false,
+            currentStep: coloringOrder.length - 1,
+          }));
+
+          return;
+        }
+
+        const currentVertex = coloringOrder[step];
+        const currentColor = coloringResult.get(currentVertex);
+
+        setAnimation((prev) => {
+          const newVisited = new Set(prev.visitedSet);
+          const newColoringMap = new Map(prev.coloringMap ?? []);
+
+          newVisited.add(currentVertex);
+
+          if (currentColor !== undefined) {
+            newColoringMap.set(currentVertex, currentColor);
+          }
+
+          return {
+            ...prev,
+            currentStep: step,
+            visitedSet: newVisited,
+            coloringMap: newColoringMap,
+          };
+        });
+      }, speed);
+    },
+    [stopAnimation]
+  );
+
   const execute = useCallback(() => {
     const adj = getAdjacencyList(graph);
     const transAdj = getTransposedAdjacencyList(graph);
     const vertexIds = graph.vertices.map((v) => v.id);
+
+    console.log("adj", adj);
 
     const needsStart = ['bfs', 'dfs', 'transitive-closure-direct', 'transitive-closure-inverse'].includes(selectedAlgorithm);
 
@@ -235,10 +314,33 @@ export function useAlgorithm(graph: GraphState) {
         result = { algorithm: 'kosaraju-scc', startVertex: '', traversalOrder: vertexIds, result: labeledComponents, timestamp: Date.now() };
         break;
       }
+
+      case 'coloring': {
+        const resultado = coloring(adj);
+
+        const labels = Array.from(resultado.entries()).map(([vertexId, color]) => {
+          const vertexLabel = getVertexLabel(graph, vertexId);
+          return `${vertexLabel}: cor ${color}`;
+        });
+
+        addLog(`✓ Coloring result: ${labels.join(' | ')}`, 'success');
+
+        result = {
+          algorithm: 'coloring',
+          startVertex: '',
+          traversalOrder: Array.from(resultado.keys()),
+          result: labels.join(' | '),
+          timestamp: Date.now(),
+        };
+
+        runColoringAnimation(resultado, animation.speed);
+
+        break;
+      }
     }
 
     setResults((prev) => [result, ...prev]);
-  }, [graph, selectedAlgorithm, startVertex, addLog, runAnimation, animation.speed]);
+  }, [graph, selectedAlgorithm, startVertex, addLog, runAnimation, runColoringAnimation, animation.speed]);
 
   return {
     selectedAlgorithm,

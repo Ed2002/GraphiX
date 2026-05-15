@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef } from 'react';
 import type { GraphState, AnimationState } from '../types';
 import { MiniMap } from './MiniMap';
+import { COLOR_PALETTE } from '../utils/graph';
 
 interface GraphCanvasProps {
   graph: GraphState;
@@ -43,15 +44,29 @@ function computePositions(
 }
 
 function getNodeColor(vertexId: string, animation: AnimationState): string {
-  if (animation.traversalOrder.length === 0) return 'var(--color-node-default)';
+  const colorNumber = animation.coloringMap?.get(vertexId);
+
+  if (colorNumber !== undefined) {
+    return COLOR_PALETTE[colorNumber] ?? '#64748b';
+  }
+
+  if (animation.traversalOrder.length === 0) {
+    return 'var(--color-node-default)';
+  }
 
   const currentVertexId = animation.traversalOrder[animation.currentStep];
 
-  if (vertexId === currentVertexId) return 'var(--color-node-visiting)';
-  if (animation.visitedSet.has(vertexId)) return 'var(--color-node-visited)';
+  if (vertexId === currentVertexId) {
+    return 'var(--color-node-visiting)';
+  }
 
-  // If animation has started, unvisited nodes in the traversal get dim color
-  if (animation.traversalOrder.includes(vertexId)) return 'var(--color-node-unvisited)';
+  if (animation.visitedSet.has(vertexId)) {
+    return 'var(--color-node-visited)';
+  }
+
+  if (animation.traversalOrder.includes(vertexId)) {
+    return 'var(--color-node-unvisited)';
+  }
 
   return 'var(--color-node-default)';
 }
@@ -107,12 +122,12 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
     const svg = svgRef.current;
     const g = svg?.querySelector('#graph-group') as SVGGElement | null;
     if (!svg || !g) return;
-    
+
     const pt = svg.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
     const cursor = pt.matrixTransform(g.getScreenCTM()?.inverse());
-    
+
     setDragInfo({
       id: vertexId,
       offsetX: cursor.x - pos.x,
@@ -136,12 +151,12 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
     const svg = svgRef.current;
     const g = svg?.querySelector('#graph-group') as SVGGElement | null;
     if (!svg || !g) return;
-    
+
     const pt = svg.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
     const cursor = pt.matrixTransform(g.getScreenCTM()?.inverse());
-    
+
     setManualPositions((prev) => ({
       ...prev,
       [dragInfo.id]: {
@@ -169,19 +184,19 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
     const zoomDirection = e.deltaY > 0 ? -1 : 1;
     const zoomFactor = 0.1;
     const newZoom = Math.max(0.1, Math.min(zoom + (zoomDirection * zoomFactor * zoom), 4));
-    
+
     if (newZoom !== zoom) {
       const pt = svg.createSVGPoint();
       pt.x = e.clientX;
       pt.y = e.clientY;
       const cursor = pt.matrixTransform(svg.getScreenCTM()?.inverse());
-      
+
       const gX = (cursor.x - pan.x) / zoom;
       const gY = (cursor.y - pan.y) / zoom;
-      
+
       const newPanX = cursor.x - gX * newZoom;
       const newPanY = cursor.y - gY * newZoom;
-      
+
       setZoom(newZoom);
       setPan({ x: newPanX, y: newPanY });
     }
@@ -287,116 +302,116 @@ export function GraphCanvas({ graph, animation }: GraphCanvasProps) {
 
         <g id="graph-group" transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
 
-        {/* Edges */}
-        {graph.edges.map((edge) => {
-          const from = positions.get(edge.from);
-          const to = positions.get(edge.to);
-          if (!from || !to) return null;
+          {/* Edges */}
+          {graph.edges.map((edge) => {
+            const from = positions.get(edge.from);
+            const to = positions.get(edge.to);
+            if (!from || !to) return null;
 
-          // Shorten line to stop at node boundary
-          const dx = to.x - from.x;
-          const dy = to.y - from.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist === 0) return null;
+            // Shorten line to stop at node boundary
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist === 0) return null;
 
-          const offsetFrom = NODE_RADIUS / dist;
-          const offsetTo = (NODE_RADIUS + (graph.directed ? ARROW_SIZE : 0)) / dist;
+            const offsetFrom = NODE_RADIUS / dist;
+            const offsetTo = (NODE_RADIUS + (graph.directed ? ARROW_SIZE : 0)) / dist;
 
-          const x1 = from.x + dx * offsetFrom;
-          const y1 = from.y + dy * offsetFrom;
-          const x2 = to.x - dx * offsetTo;
-          const y2 = to.y - dy * offsetTo;
+            const x1 = from.x + dx * offsetFrom;
+            const y1 = from.y + dy * offsetFrom;
+            const x2 = to.x - dx * offsetTo;
+            const y2 = to.y - dy * offsetTo;
 
-          // Determine if this edge is highlighted
-          const isHighlighted =
-            animation.visitedSet.has(edge.from) && animation.visitedSet.has(edge.to);
+            // Determine if this edge is highlighted
+            const isHighlighted =
+              animation.visitedSet.has(edge.from) && animation.visitedSet.has(edge.to);
 
-          return (
-            <line
-              key={`${edge.from}-${edge.to}`}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              stroke={isHighlighted ? 'var(--color-edge-highlight)' : 'var(--color-edge-default)'}
-              strokeWidth={isHighlighted ? 2.5 : 1.5}
-              opacity={isHighlighted ? 1 : 0.6}
-              markerEnd={graph.directed ? `url(#${isHighlighted ? markerHighlightId : markerId})` : undefined}
-              style={{ transition: 'stroke 0.3s, stroke-width 0.3s, opacity 0.3s' }}
-            />
-          );
-        })}
+            return (
+              <line
+                key={`${edge.from}-${edge.to}`}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke={isHighlighted ? 'var(--color-edge-highlight)' : 'var(--color-edge-default)'}
+                strokeWidth={isHighlighted ? 2.5 : 1.5}
+                opacity={isHighlighted ? 1 : 0.6}
+                markerEnd={graph.directed ? `url(#${isHighlighted ? markerHighlightId : markerId})` : undefined}
+                style={{ transition: 'stroke 0.3s, stroke-width 0.3s, opacity 0.3s' }}
+              />
+            );
+          })}
 
-        {/* Nodes */}
-        {graph.vertices.map((vertex) => {
-          const pos = positions.get(vertex.id);
-          if (!pos) return null;
+          {/* Nodes */}
+          {graph.vertices.map((vertex) => {
+            const pos = positions.get(vertex.id);
+            if (!pos) return null;
 
-          const fill = getNodeColor(vertex.id, animation);
-          const glow = getNodeGlow(vertex.id, animation);
-          const isVisiting =
-            animation.traversalOrder[animation.currentStep] === vertex.id;
+            const fill = getNodeColor(vertex.id, animation);
+            const glow = getNodeGlow(vertex.id, animation);
+            const isVisiting =
+              animation.traversalOrder[animation.currentStep] === vertex.id;
 
-          const isDragging = dragInfo?.id === vertex.id;
+            const isDragging = dragInfo?.id === vertex.id;
 
-          return (
-            <g 
-              key={vertex.id}
-              onPointerDown={(e) => handlePointerDown(e, vertex.id, pos)}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-              style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-            >
-              {/* Outer glow ring */}
-              {isVisiting && (
+            return (
+              <g
+                key={vertex.id}
+                onPointerDown={(e) => handlePointerDown(e, vertex.id, pos)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+              >
+                {/* Outer glow ring */}
+                {isVisiting && (
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={NODE_RADIUS + 6}
+                    fill="none"
+                    stroke="var(--color-node-visiting)"
+                    strokeWidth="2"
+                    opacity="0.4"
+                    style={{
+                      animation: 'node-visit 0.6s ease-in-out',
+                    }}
+                  />
+                )}
+
+                {/* Node circle */}
                 <circle
                   cx={pos.x}
                   cy={pos.y}
-                  r={NODE_RADIUS + 6}
-                  fill="none"
-                  stroke="var(--color-node-visiting)"
+                  r={NODE_RADIUS}
+                  fill={fill}
+                  stroke={fill}
                   strokeWidth="2"
-                  opacity="0.4"
+                  opacity="0.9"
+                  filter={isVisiting ? 'url(#glow)' : undefined}
                   style={{
-                    animation: 'node-visit 0.6s ease-in-out',
+                    transition: 'fill 0.3s, opacity 0.3s',
+                    filter: glow !== 'none' ? `drop-shadow(${glow})` : undefined,
                   }}
                 />
-              )}
 
-              {/* Node circle */}
-              <circle
-                cx={pos.x}
-                cy={pos.y}
-                r={NODE_RADIUS}
-                fill={fill}
-                stroke={fill}
-                strokeWidth="2"
-                opacity="0.9"
-                filter={isVisiting ? 'url(#glow)' : undefined}
-                style={{
-                  transition: 'fill 0.3s, opacity 0.3s',
-                  filter: glow !== 'none' ? `drop-shadow(${glow})` : undefined,
-                }}
-              />
-
-              {/* Label */}
-              <text
-                x={pos.x}
-                y={pos.y}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill="white"
-                fontSize="12"
-                fontWeight="600"
-                fontFamily="var(--font-sans)"
-                style={{ pointerEvents: 'none', userSelect: 'none' }}
-              >
-                {vertex.label}
-              </text>
-            </g>
-          );
-        })}
+                {/* Label */}
+                <text
+                  x={pos.x}
+                  y={pos.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="white"
+                  fontSize="12"
+                  fontWeight="600"
+                  fontFamily="var(--font-sans)"
+                  style={{ pointerEvents: 'none', userSelect: 'none' }}
+                >
+                  {vertex.label}
+                </text>
+              </g>
+            );
+          })}
 
         </g>
       </svg>
