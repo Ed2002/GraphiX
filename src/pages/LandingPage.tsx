@@ -2,6 +2,13 @@ import { Link } from 'react-router-dom';
 
 const CHANGELOG = [
   {
+    version: 'v1.3.0',
+    date: 'June 11, 2026',
+    changes: [
+      'Added an A* Brazil route planner with OpenStreetMap visualization, open/closed lists, and traffic simulation scenarios.',
+    ],
+  },
+  {
     version: 'v1.2.0',
     date: 'May 14, 2026',
     changes: [
@@ -63,6 +70,15 @@ export function LandingPage() {
                 </svg>
               </button>
             </Link>
+            <Link to="/a-star" className="inline-block relative group">
+              <div className="absolute -inset-1 rounded-lg opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 "></div>
+              <button className="cursor-pointer relative px-8 py-3.5 bg-bg-elevated hover:bg-gradient-to-r from-info to-warning text-white rounded-lg font-medium transition-all flex items-center gap-2">
+                Open A* Brazil
+                <svg className="w-4 h-4 text-text-muted group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </button>
+            </Link>
             <a href="https://github.com/Ed2002/GraphiX" target="_blank" rel="noopener noreferrer" className="inline-block relative group">
               <div className="absolute -inset-1  rounded-lg opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
               <button className="cursor-pointer relative px-8 py-3.5 bg-bg-elevated hover:bg-bg-tertiary text-white rounded-lg font-medium transition-all flex items-center gap-2">
@@ -91,6 +107,11 @@ export function LandingPage() {
             icon={<svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
             title="Real-time Metrics"
             desc="Automatic live adjacency matrices, calculated graph density, and visual history logs."
+          />
+          <FeatureCard
+            icon={<svg className="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 01.553-.894L9 2m0 18l6-3m-6 3V2m6 15l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m-6-2l6 3" /></svg>}
+            title="A* Brazil Scenarios"
+            desc="Route planning between Brazilian capitals with normal and traffic scenarios over an OpenStreetMap map."
           />
         </section>
 

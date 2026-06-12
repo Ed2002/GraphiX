@@ -7,6 +7,7 @@ Design, analyze, and visualize interactive graphs in a production-ready environm
 - **Interactive Canvas**: Node dragging, seamless zoom and map panning backed by an automatic scaled minimap.
 - **Algorithm Visualization**: Traverse through BFS, DFS, and strongly connected components with controlled speed steps.
 - **Real-time Metrics**: Automatic live adjacency matrices, calculated graph density, and visual history logs.
+- **A* Brazil Scenarios**: Find minimum-cost routes between Brazilian capitals with OpenStreetMap graphs, open/closed lists, and congestion simulation.
 
 ## Demo
 
